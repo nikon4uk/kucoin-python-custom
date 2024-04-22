@@ -11,9 +11,9 @@ from uuid import uuid1
 from urllib.parse import urljoin
 import socket
 
-
 try:
     import pkg_resources
+
     version = 'v' + pkg_resources.get_distribution("kucoin-python").version
 except (ModuleNotFoundError, pkg_resources.DistributionNotFound):
     version = 'v1.0.0'
@@ -21,7 +21,7 @@ except (ModuleNotFoundError, pkg_resources.DistributionNotFound):
 
 class KucoinBaseRestApi(object):
 
-    def __init__(self, key='', secret='', passphrase='', is_sandbox=False, url='', is_v1api=False):
+    def __init__(self, key='', secret='', passphrase='', is_sandbox=False, url='', is_v1api=False, proxies=None):
         """
         https://docs.kucoin.com
 
@@ -46,8 +46,8 @@ class KucoinBaseRestApi(object):
         self.secret = secret
         self.passphrase = passphrase
         self.is_v1api = is_v1api
+        self.proxies = proxies
         self.TCP_NODELAY = 0
-
 
     def _request(self, method, uri, timeout=5, auth=True, params=None):
         uri_path = uri
@@ -91,7 +91,7 @@ class KucoinBaseRestApi(object):
                     "Content-Type": "application/json",
                     "KC-API-KEY-VERSION": "2"
                 }
-        headers["User-Agent"] = "kucoin-python-sdk/"+version
+        headers["User-Agent"] = "kucoin-python-sdk/" + version
         url = urljoin(self.url, uri)
         superReq = requests
         if self.TCP_NODELAY == 1:
@@ -102,10 +102,10 @@ class KucoinBaseRestApi(object):
             ]
             superReq.mount('https://', adapter)
         if method in ['GET', 'DELETE']:
-            response_data = superReq.request(method, url, headers=headers, timeout=timeout)
+            response_data = superReq.request(method, url, headers=headers, timeout=timeout, proxies=self.proxies)
         else:
             response_data = superReq.request(method, url, headers=headers, data=data_json,
-                                             timeout=timeout)
+                                             timeout=timeout, proxies=self.proxies)
         return self.check_response_data(response_data)
 
     @staticmethod
